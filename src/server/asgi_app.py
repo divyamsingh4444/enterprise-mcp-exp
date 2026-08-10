@@ -19,7 +19,7 @@ from starlette.responses import JSONResponse, StreamingResponse
 
 from src.auth.auth_context import AuthContext, get_auth_context, require_authenticated
 from src.auth.middleware import CorrelationMiddleware, AuditLogger
-from src.routers.oauth import router as oauth_router
+from src.routers.oauth import router as oauth_router, init_test_user
 from src.sandbox.runner import SandboxRunner
 from src.tools.sandboxed import (
     run_command_sandboxed,
@@ -59,6 +59,7 @@ class ToolCallResponse(BaseModel):
 async def lifespan(app: FastAPI):
     """Application lifecycle management"""
     logger.info("🚀 Enterprise MCP Server starting up...")
+    init_test_user()
     yield
     logger.info("🛑 Enterprise MCP Server shutting down...")
 

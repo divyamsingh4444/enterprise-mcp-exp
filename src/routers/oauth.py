@@ -207,3 +207,20 @@ async def list_available_scopes(auth: AuthContext = Depends(require_authenticate
         "total": len(TOOL_SCOPES),
         "org_id": auth.org_id
     }
+
+
+def init_test_user():
+    """Initialize test user for development."""
+    email = "test@example.com"
+    password = "TestPass123!"
+    org_id = "org-test-001"
+
+    if email not in _users_db:
+        _users_db[email] = {
+            "password_hash": hash_pw(password),
+            "org_id": org_id,
+            "scopes": list(TOOL_SCOPES.keys()),
+            "enabled": True,
+            "created_at": "2026-08-10T00:00:00Z"
+        }
+        logger.info(f"Test user initialized: {email} / org: {org_id}")
