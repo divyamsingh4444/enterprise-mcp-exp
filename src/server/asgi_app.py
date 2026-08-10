@@ -165,7 +165,7 @@ async def list_tools(auth: AuthContext = Depends(require_authenticated)):
         },
     ]
 
-    logger.info(f"Tools listed by {auth.subjectject} from org {auth.org_id}")
+    logger.info(f"Tools listed by {auth.subject} from org {auth.org_id}")
 
     return {"tools": tools, "total": len(tools)}
 
