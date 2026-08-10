@@ -7,9 +7,9 @@ import logging
 import time
 from typing import Dict, Any
 
-from sandbox.runner import get_sandbox_runner
-from auth.auth_context import AuthContext
-from auth.middleware import AuditLogger
+from src.sandbox.runner import get_sandbox_runner
+from src.auth.auth_context import AuthContext
+from src.auth.middleware import AuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +88,7 @@ async def list_directory_sandboxed(path: str, auth: AuthContext) -> Dict[str, An
         result = await runner.list_directory(path)
         if result.success:
             AuditLogger.log_tool_execution(auth.subject, "list_directory", auth.org_id, result.duration_ms)
-            entries = result.stdout.strip().split("
-") if result.stdout else []
+            entries = result.stdout.strip().split("\n") if result.stdout else []
             return {"success": True, "path": path, "entries": entries, "count": len(entries), "duration_ms": result.duration_ms, "sandboxed": True}
         return {"success": False, "path": path, "error": result.stderr, "duration_ms": result.duration_ms, "sandboxed": True}
     except Exception as e:

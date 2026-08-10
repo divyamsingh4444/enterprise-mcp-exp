@@ -1,0 +1,32 @@
+# MCP Server - Enterprise Edition
+# Phase 1: Transport & Network
+starlette>=0.40.0
+uvicorn>=0.30.0
+aioredis>=2.0.0
+redis>=5.0.0
+
+# Phase 2: Identity & Sandboxing
+fastapi>=0.109.0
+pydantic>=2.0.0
+PyJWT>=2.8.0
+cryptography>=41.0.0
+python-multipart>=0.0.6
+authlib>=1.3.0
+docker>=7.0.0
+
+# Phase 3: Observability
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-jaeger>=1.20.0
+opentelemetry-instrumentation-starlette>=0.41b0
+opentelemetry-instrumentation-httpx>=0.41b0
+deprecated>=1.2.0
+
+# HTTP client
+httpx>=0.26.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0

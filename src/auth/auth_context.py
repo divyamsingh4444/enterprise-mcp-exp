@@ -7,7 +7,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Optional, List
 from fastapi import Header, HTTPException
-from auth.token_utils import verify_token
+from src.auth.token_utils import verify_token
 
 # Tool scopes mapping
 TOOL_SCOPES = {

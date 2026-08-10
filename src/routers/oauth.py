@@ -7,15 +7,15 @@ import logging
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from auth.token_utils import (
+from src.auth.token_utils import (
     sign_token, verify_token, hash_pw, verify_pw,
     temp_password, generate_nonce,
     MAGIC_TTL, SESSION_TTL, SERVICE_TTL
 )
-from auth.auth_context import (
+from src.auth.auth_context import (
     require_authenticated, require_operator, AuthContext, TOOL_SCOPES
 )
-from auth.middleware import AuditLogger
+from src.auth.middleware import AuditLogger
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["oauth"])

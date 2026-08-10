@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # Nginx reverse proxy with load balancing
+  nginx:
+    image: nginx:latest
+    container_name: mcp-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - asgi-worker-1
+      - asgi-worker-2
+      - asgi-worker-3
+      - asgi-worker-4
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # ASGI Worker 1
+  asgi-worker-1:
+    build:
+      context: .
+      dockerfile: docker/asgi/Dockerfile
+    container_name: mcp-asgi-1
+    environment:
+      - PORT=8001
+      - WORKERS=1
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=${DATABASE_URL}
+      - MCP_SECRET_KEY=${MCP_SECRET_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      - JAEGER_EXPORTER_OTLP_ENDPOINT=${JAEGER_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
+    depends_on:
+      - redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # ASGI Worker 2
+  asgi-worker-2:
+    build:
+      context: .
+      dockerfile: docker/asgi/Dockerfile
+    container_name: mcp-asgi-2
+    environment:
+      - PORT=8002
+      - WORKERS=1
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=${DATABASE_URL}
+      - MCP_SECRET_KEY=${MCP_SECRET_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      - JAEGER_EXPORTER_OTLP_ENDPOINT=${JAEGER_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
+    depends_on:
+      - redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # ASGI Worker 3
+  asgi-worker-3:
+    build:
+      context: .
+      dockerfile: docker/asgi/Dockerfile
+    container_name: mcp-asgi-3
+    environment:
+      - PORT=8003
+      - WORKERS=1
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=${DATABASE_URL}
+      - MCP_SECRET_KEY=${MCP_SECRET_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      - JAEGER_EXPORTER_OTLP_ENDPOINT=${JAEGER_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
+    depends_on:
+      - redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # ASGI Worker 4
+  asgi-worker-4:
+    build:
+      context: .
+      dockerfile: docker/asgi/Dockerfile
+    container_name: mcp-asgi-4
+    environment:
+      - PORT=8004
+      - WORKERS=1
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=${DATABASE_URL}
+      - MCP_SECRET_KEY=${MCP_SECRET_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      - JAEGER_EXPORTER_OTLP_ENDPOINT=${JAEGER_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
+    depends_on:
+      - redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # Redis for event store and caching
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: mcp-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP receiver
+      - "6831:6831/udp"  # Jaeger agent
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  mcp-network:
+    driver: bridge
