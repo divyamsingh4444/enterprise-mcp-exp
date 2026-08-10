@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: enterprise-mcp
+
+namespace: mcp-system
+
+resources:
+- namespace.yaml
+- configmap.yaml
+- secret.yaml
+- rbac.yaml
+- redis-statefulset.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- hpa.yaml
+- pdb.yaml
+- network-policy.yaml
+
+commonLabels:
+  app: enterprise-mcp
+  managed-by: kustomize
+
+commonAnnotations:
+  description: "Enterprise MCP Server - Production Kubernetes Deployment"
+  version: "1.0.0"
+
+images:
+- name: enterprise-mcp
+  newName: divyamsingh4444/enterprise-mcp
+  newTag: latest
+
+replicas:
+- name: mcp-server
+  count: 3
+
+namePrefix: mcp-
+
+# Vars for templating
+vars:
+- name: NAMESPACE
+  objref:
+    kind: Namespace
+    name: mcp-system
+    apiVersion: v1
+  fieldref:
+    fieldpath: metadata.name
+
+# Patches for environment-specific overrides
+patchesStrategicMerge: []
+
+# Patches for JSON patch operations
+patchesJson6902: []

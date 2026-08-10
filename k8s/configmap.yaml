@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-config
+  namespace: mcp-system
+  labels:
+    app: enterprise-mcp
+data:
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  REDIS_URL: "redis://mcp-redis-service:6379"
+  JAEGER_EXPORTER_OTLP_ENDPOINT: "http://jaeger-collector:4317"
+  LOG_LEVEL: "INFO"
+  WORKER_COUNT: "4"
+  MAX_REQUESTS_PER_SECOND: "1000"
+  CORS_ORIGINS: "http://localhost:3000,https://*.example.com"
+  SESSION_TIMEOUT_HOURS: "24"
+  TOKEN_EXPIRY_DAYS: "7"

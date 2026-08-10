@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mcp-pdb
+  namespace: mcp-system
+  labels:
+    app: enterprise-mcp
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: enterprise-mcp
+      component: server

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mcp-redis
+  namespace: mcp-system
+  labels:
+    app: enterprise-mcp
+    component: redis
+spec:
+  serviceName: mcp-redis-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enterprise-mcp
+      component: redis
+  template:
+    metadata:
+      labels:
+        app: enterprise-mcp
+        component: redis
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        command:
+        - redis-server
+        - "--appendonly"
+        - "yes"
+        - "--requirepass"
+        - "$(REDIS_PASSWORD)"
+        ports:
+        - name: redis
+          containerPort: 6379
+          protocol: TCP
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: REDIS_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 2
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-redis-service
+  namespace: mcp-system
+  labels:
+    app: enterprise-mcp
+    component: redis
+spec:
+  clusterIP: None
+  selector:
+    app: enterprise-mcp
+    component: redis
+  ports:
+  - port: 6379
+    targetPort: redis
+    protocol: TCP
