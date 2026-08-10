@@ -17,7 +17,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, StreamingResponse
 
-from src.auth.auth_context import AuthContext, get_auth_context
+from src.auth.auth_context import AuthContext, get_auth_context, require_authenticated
 from src.auth.middleware import CorrelationMiddleware, AuditLogger
 from src.routers.oauth import router as oauth_router
 from src.sandbox.runner import SandboxRunner
@@ -107,7 +107,7 @@ app.include_router(oauth_router, tags=["authentication"])
 
 # MCP Tool endpoints
 @app.get("/api/v1/mcp/tools/list")
-async def list_tools(auth: AuthContext = Depends(get_auth_context)):
+async def list_tools(auth: AuthContext = Depends(require_authenticated)):
     """List all available MCP tools"""
     metrics.increment("tool_list_called")
 
@@ -164,7 +164,7 @@ async def list_tools(auth: AuthContext = Depends(get_auth_context)):
         },
     ]
 
-    logger.info(f"Tools listed by {auth.sub} from org {auth.org_id}")
+    logger.info(f"Tools listed by {auth.subjectject} from org {auth.org_id}")
 
     return {"tools": tools, "total": len(tools)}
 
@@ -172,7 +172,7 @@ async def list_tools(auth: AuthContext = Depends(get_auth_context)):
 @app.post("/api/v1/mcp/tools/call", response_model=ToolCallResponse)
 async def call_tool(
     request: ToolCallRequest,
-    auth: AuthContext = Depends(get_auth_context),
+    auth: AuthContext = Depends(require_authenticated),
 ):
     """Execute an MCP tool"""
     import time
@@ -194,7 +194,7 @@ async def call_tool(
         duration_ms = (time.time() - start_time) * 1000
         metrics.increment("tool_execution_failure")
 
-        logger.error(f"Tool not found: {tool_name} by {auth.sub}")
+        logger.error(f"Tool not found: {tool_name} by {auth.subject}")
 
         raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
 
@@ -205,7 +205,7 @@ async def call_tool(
         metrics.increment("scope_check_failure")
         metrics.increment("tool_execution_failure")
 
-        logger.warning(f"Scope denied: {required_scope} for {auth.sub}")
+        logger.warning(f"Scope denied: {required_scope} for {auth.subject}")
 
         raise HTTPException(
             status_code=403,
@@ -242,7 +242,7 @@ async def call_tool(
         metrics.increment("tool_execution_success")
         metrics.record_tool_execution_duration(duration_ms)
 
-        logger.info(f"Tool executed successfully: {tool_name} by {auth.sub} in {duration_ms:.0f}ms")
+        logger.info(f"Tool executed successfully: {tool_name} by {auth.subject} in {duration_ms:.0f}ms")
 
         return ToolCallResponse(
             success=True,
@@ -254,7 +254,7 @@ async def call_tool(
         duration_ms = (time.time() - start_time) * 1000
         metrics.increment("tool_execution_failure")
 
-        logger.error(f"Tool execution failed: {tool_name} by {auth.sub}: {str(e)}")
+        logger.error(f"Tool execution failed: {tool_name} by {auth.subject}: {str(e)}")
         return ToolCallResponse(
             success=False,
             error=str(e),
