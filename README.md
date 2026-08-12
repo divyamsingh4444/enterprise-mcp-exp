@@ -22,3 +22,4 @@ enterprise-mcp/
 ├── infra/            # Infrastructure configs (Nginx, Keycloak, Vault, Jaeger)
 └── docs/             # Architecture and deployment documentation
 ```
+Last updated: Wed Aug 12 17:49:55 IST 2026
