@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, Tool, ToolCallResponse } from '../services/api';
 import { useAuthStore } from '../store/auth';
-import { LogOut, Play, Loader, AlertCircle, CheckCircle, Code2, Settings } from 'lucide-react';
+import { Play, Loader, AlertCircle, CheckCircle, Code2 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const [tools, setTools] = useState<Tool[]>([]);
