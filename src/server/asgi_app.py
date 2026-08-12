@@ -91,6 +91,23 @@ audit_logger = AuditLogger()
 sandbox_runner = SandboxRunner()
 
 
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint - API information"""
+    return {
+        "name": "Enterprise MCP Server",
+        "version": "1.0.0",
+        "status": "operational",
+        "endpoints": {
+            "health": "/health",
+            "auth": "/auth/login, /auth/signup, /auth/logout",
+            "tools": "/api/v1/mcp/tools/list, /api/v1/mcp/tools/call",
+            "metrics": "/metrics"
+        }
+    }
+
+
 # Health check endpoint
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
