@@ -179,6 +179,18 @@ async def call_tool(
     import time
 
     start_time = time.time()
+
+    # Debug: log auth type
+    logger.info(f"Auth type: {type(auth).__name__}, Auth value: {auth}")
+
+    if not isinstance(auth, AuthContext):
+        logger.error(f"ERROR: auth is {type(auth).__name__}, not AuthContext!")
+        return ToolCallResponse(
+            success=False,
+            error=f"Internal error: auth context is invalid type {type(auth).__name__}",
+            duration_ms=(time.time() - start_time) * 1000,
+        )
+
     tool_name = request.tool
     arguments = request.arguments
 
