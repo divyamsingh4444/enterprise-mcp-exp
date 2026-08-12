@@ -13,15 +13,18 @@ from src.auth.middleware import AuditLogger
 
 logger = logging.getLogger(__name__)
 
-async def run_command_sandboxed(command: str, auth: AuthContext, timeout_s: float = 20.0) -> Dict[str, Any]:
+async def run_command_sandboxed(command: str, timeout_s: float = 20.0, auth: AuthContext = None) -> Dict[str, Any]:
     """Execute shell command in sandboxed container. Requires: tools:shell:execute scope"""
+    if not auth:
+        return {"exit_code": 1, "stdout": "", "stderr": "No auth context", "duration_ms": 0, "sandboxed": True}
+
     start_time = time.time()
     runner = get_sandbox_runner()
-    
+
     if not auth.has_scope("tools:shell:execute") and not auth.has_scope("tools:*"):
         AuditLogger.log_scope_check(auth.subject, "tools:shell:execute", False, auth.org_id)
         return {"exit_code": 1, "stdout": "", "stderr": "Insufficient permissions", "duration_ms": 0, "sandboxed": True}
-    
+
     AuditLogger.log_scope_check(auth.subject, "tools:shell:execute", True, auth.org_id)
     try:
         result = await runner.run_command(command, timeout_s=timeout_s)
@@ -32,15 +35,18 @@ async def run_command_sandboxed(command: str, auth: AuthContext, timeout_s: floa
         AuditLogger.log_tool_execution(auth.subject, "run_command", auth.org_id, duration_ms)
         return {"exit_code": 1, "stdout": "", "stderr": str(e), "duration_ms": duration_ms, "sandboxed": True}
 
-async def write_file_sandboxed(path: str, content: str, auth: AuthContext, mode: str = "overwrite") -> Dict[str, Any]:
+async def write_file_sandboxed(path: str, content: str, mode: str = "overwrite", auth: AuthContext = None) -> Dict[str, Any]:
     """Write file in sandboxed container. Requires: tools:filesystem:write scope"""
+    if not auth:
+        return {"success": False, "path": path, "error": "No auth context", "sandboxed": True}
+
     start_time = time.time()
     runner = get_sandbox_runner()
-    
+
     if not auth.has_scope("tools:filesystem:write") and not auth.has_scope("tools:*"):
         AuditLogger.log_scope_check(auth.subject, "tools:filesystem:write", False, auth.org_id)
         return {"success": False, "path": path, "error": "Insufficient permissions", "sandboxed": True}
-    
+
     AuditLogger.log_scope_check(auth.subject, "tools:filesystem:write", True, auth.org_id)
     try:
         result = await runner.write_file(path, content, mode)
@@ -53,15 +59,18 @@ async def write_file_sandboxed(path: str, content: str, auth: AuthContext, mode:
         AuditLogger.log_tool_execution(auth.subject, "write_file", auth.org_id, duration_ms)
         return {"success": False, "path": path, "error": str(e), "duration_ms": duration_ms, "sandboxed": True}
 
-async def read_file_sandboxed(path: str, auth: AuthContext) -> Dict[str, Any]:
+async def read_file_sandboxed(path: str, auth: AuthContext = None) -> Dict[str, Any]:
     """Read file from sandboxed container. Requires: tools:filesystem:read scope"""
+    if not auth:
+        return {"success": False, "path": path, "error": "No auth context", "sandboxed": True}
+
     start_time = time.time()
     runner = get_sandbox_runner()
-    
+
     if not auth.has_scope("tools:filesystem:read") and not auth.has_scope("tools:*"):
         AuditLogger.log_scope_check(auth.subject, "tools:filesystem:read", False, auth.org_id)
         return {"success": False, "path": path, "error": "Insufficient permissions", "sandboxed": True}
-    
+
     AuditLogger.log_scope_check(auth.subject, "tools:filesystem:read", True, auth.org_id)
     try:
         result = await runner.read_file(path)
@@ -74,15 +83,18 @@ async def read_file_sandboxed(path: str, auth: AuthContext) -> Dict[str, Any]:
         AuditLogger.log_tool_execution(auth.subject, "read_file", auth.org_id, duration_ms)
         return {"success": False, "path": path, "error": str(e), "duration_ms": duration_ms, "sandboxed": True}
 
-async def list_directory_sandboxed(path: str, auth: AuthContext) -> Dict[str, Any]:
+async def list_directory_sandboxed(path: str = ".", auth: AuthContext = None) -> Dict[str, Any]:
     """List directory contents in sandboxed container. Requires: tools:filesystem:list scope"""
+    if not auth:
+        return {"success": False, "path": path, "error": "No auth context", "sandboxed": True}
+
     start_time = time.time()
     runner = get_sandbox_runner()
-    
+
     if not auth.has_scope("tools:filesystem:list") and not auth.has_scope("tools:*"):
         AuditLogger.log_scope_check(auth.subject, "tools:filesystem:list", False, auth.org_id)
         return {"success": False, "path": path, "error": "Insufficient permissions", "sandboxed": True}
-    
+
     AuditLogger.log_scope_check(auth.subject, "tools:filesystem:list", True, auth.org_id)
     try:
         result = await runner.list_directory(path)

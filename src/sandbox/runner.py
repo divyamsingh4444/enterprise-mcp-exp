@@ -6,12 +6,22 @@ Provides container-based execution with OS-level isolation.
 import asyncio
 import json
 import logging
+import re
 import subprocess
 import time
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
+
+BLOCKED_PATTERNS = [
+    r'format\s+[a-z]:\s*/',
+    r'rd\s+/s\s+/q',
+    r'del\s+/s\s+/q',
+    r'diskpart',
+    r'shutdown\s+/s',
+    r'reg\s+delete\s+hklm',
+]
 
 @dataclass
 class SandboxResult:
@@ -39,21 +49,32 @@ class SandboxRunner:
     ) -> SandboxResult:
         """
         Execute command in sandboxed environment.
-        
+
         Args:
             command: Shell command to execute
             timeout_s: Timeout in seconds (max 120)
             cwd: Working directory
             env: Environment variables
-            
+
         Returns:
             SandboxResult with exit code, stdout, stderr, duration
         """
         start_time = time.time()
-        timeout_s = min(timeout_s, 120.0)  # Cap at 120s
-        
+        timeout_s = min(timeout_s, 120.0)
+
+        for pattern in BLOCKED_PATTERNS:
+            if re.search(pattern, command, re.IGNORECASE):
+                duration_ms = (time.time() - start_time) * 1000
+                logger.warning(f"Blocked dangerous command: {command}")
+                return SandboxResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr="Command blocked: operation is too dangerous",
+                    duration_ms=duration_ms,
+                    success=False
+                )
+
         try:
-            # Run command with timeout
             result = subprocess.run(
                 command,
                 shell=True,

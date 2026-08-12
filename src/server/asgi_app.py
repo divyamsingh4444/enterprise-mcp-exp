@@ -177,102 +177,47 @@ async def call_tool(
 ):
     """Execute an MCP tool"""
     import time
-
     start_time = time.time()
 
-    # Debug: log auth type
-    logger.info(f"Auth type: {type(auth).__name__}, Auth value: {auth}")
-
-    if not isinstance(auth, AuthContext):
-        logger.error(f"ERROR: auth is {type(auth).__name__}, not AuthContext!")
-        return ToolCallResponse(
-            success=False,
-            error=f"Internal error: auth context is invalid type {type(auth).__name__}",
-            duration_ms=(time.time() - start_time) * 1000,
-        )
-
-    tool_name = request.tool
-    arguments = request.arguments
-
-    # Tool to scope mapping
-    tool_scopes = {
-        "run_command": "tools:shell:execute",
-        "read_file": "tools:filesystem:read",
-        "write_file": "tools:filesystem:write",
-        "list_directory": "tools:filesystem:list",
-    }
-
-    # Check if tool exists
-    if tool_name not in tool_scopes:
-        duration_ms = (time.time() - start_time) * 1000
-        metrics.increment("tool_execution_failure")
-
-        logger.error(f"Tool not found: {tool_name} by {auth.subject}")
-
-        raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
-
-    # Check scope
-    required_scope = tool_scopes[tool_name]
-    if not auth.has_scope(required_scope):
-        duration_ms = (time.time() - start_time) * 1000
-        metrics.increment("scope_check_failure")
-        metrics.increment("tool_execution_failure")
-
-        logger.warning(f"Scope denied: {required_scope} for {auth.subject}")
-
-        raise HTTPException(
-            status_code=403,
-            detail=f"Missing required scope: {required_scope}",
-        )
-
-    # Execute tool
     try:
+        tool_name = request.tool
+        arguments = request.arguments
+
+        tool_scopes = {
+            "run_command": "tools:shell:execute",
+            "read_file": "tools:filesystem:read",
+            "write_file": "tools:filesystem:write",
+            "list_directory": "tools:filesystem:list",
+        }
+
+        if tool_name not in tool_scopes:
+            raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
+
+        required_scope = tool_scopes[tool_name]
+        if not auth.has_scope(required_scope):
+            raise HTTPException(status_code=403, detail=f"Missing required scope: {required_scope}")
+
         if tool_name == "run_command":
-            result = await run_command_sandboxed(
-                arguments.get("command", ""),
-                arguments.get("timeout_s", 20.0),
-                auth,
-            )
+            result = await run_command_sandboxed(arguments.get("command", ""), arguments.get("timeout_s", 20.0), auth)
         elif tool_name == "read_file":
-            result = await read_file_sandboxed(
-                arguments.get("path", ""),
-                auth,
-            )
+            result = await read_file_sandboxed(arguments.get("path", ""), auth)
         elif tool_name == "write_file":
-            result = await write_file_sandboxed(
-                arguments.get("path", ""),
-                arguments.get("content", ""),
-                arguments.get("mode", "overwrite"),
-                auth,
-            )
+            result = await write_file_sandboxed(arguments.get("path", ""), arguments.get("content", ""), arguments.get("mode", "overwrite"), auth)
         elif tool_name == "list_directory":
-            result = await list_directory_sandboxed(
-                arguments.get("path", "."),
-                auth,
-            )
+            result = await list_directory_sandboxed(arguments.get("path", "."), auth)
 
         duration_ms = (time.time() - start_time) * 1000
         metrics.increment("tool_execution_success")
-        metrics.record_tool_execution_duration(duration_ms)
+        logger.info(f"Tool executed: {tool_name} by {auth.subject}")
+        return ToolCallResponse(success=True, result=result, duration_ms=duration_ms)
 
-        logger.info(f"Tool executed successfully: {tool_name} by {auth.subject} in {duration_ms:.0f}ms")
-
-        return ToolCallResponse(
-            success=True,
-            result=result,
-            duration_ms=duration_ms,
-        )
-
+    except HTTPException:
+        raise
     except Exception as e:
         duration_ms = (time.time() - start_time) * 1000
         metrics.increment("tool_execution_failure")
-
-        logger.error(f"Tool execution failed: {tool_name} by {auth.subject}: {str(e)}")
-        return ToolCallResponse(
-            success=False,
-            error=str(e),
-            duration_ms=duration_ms,
-        )
+        logger.error(f"Tool execution error: {str(e)}")
+        return ToolCallResponse(success=False, error=str(e), duration_ms=duration_ms)
 
 
 # Metrics endpoint
