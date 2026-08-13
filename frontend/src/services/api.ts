@@ -3,6 +3,12 @@ import axios, { AxiosInstance } from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000');
 
+// Debug: Log which API URL is being used
+if (typeof window !== 'undefined') {
+  console.log('🔗 API URL:', API_URL);
+  console.log('🔗 VITE_API_URL env:', import.meta.env.VITE_API_URL);
+}
+
 interface SignupRequest {
   email: string;
   password: string;
