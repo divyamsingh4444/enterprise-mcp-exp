@@ -13,8 +13,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Jaeger/OTLP configuration
-JAEGER_OTLP_HOST = os.getenv("JAEGER_OTLP_HOST", "localhost")
+# Jaeger/OTLP configuration (inside Docker, use service name 'mcp-jaeger')
+JAEGER_OTLP_HOST = os.getenv("JAEGER_OTLP_HOST", "mcp-jaeger")
 JAEGER_OTLP_PORT = int(os.getenv("JAEGER_OTLP_PORT", "4317"))
 
 # Initialize OTLP gRPC exporter (Jaeger OTLP receiver)
