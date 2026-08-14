@@ -28,6 +28,7 @@ from src.tools.sandboxed import (
     list_directory_sandboxed,
 )
 from src.observability.metrics import MetricsCollector
+from src.observability.otel import tracer  # Initialize OpenTelemetry
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
