@@ -1,6 +1,5 @@
 {
-  "buildCommand": "npm --prefix=frontend run build",
-  "installCommand": "npm --prefix=frontend install",
+  "buildCommand": "bash build.sh",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "rewrites": [
