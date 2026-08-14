@@ -1,30 +1,26 @@
 """
 OpenTelemetry instrumentation and tracing setup.
-Exports spans to Jaeger for distributed tracing.
+Exports spans to Jaeger for distributed tracing via OTLP gRPC.
 """
 
-from opentelemetry import trace, metrics
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.exporter.prometheus import PrometheusMetricReader
-from opentelemetry.sdk.metrics import MeterProvider
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Jaeger configuration
-JAEGER_HOST = os.getenv("JAEGER_HOST", "localhost")
-JAEGER_PORT = int(os.getenv("JAEGER_PORT", "6831"))
-JAEGER_SAMPLER = os.getenv("JAEGER_SAMPLER", "const")  # const, probabilistic, etc.
-JAEGER_SAMPLER_PARAM = float(os.getenv("JAEGER_SAMPLER_PARAM", "1.0"))  # 1.0 = sample all
+# Jaeger/OTLP configuration
+JAEGER_OTLP_HOST = os.getenv("JAEGER_OTLP_HOST", "localhost")
+JAEGER_OTLP_PORT = int(os.getenv("JAEGER_OTLP_PORT", "4317"))
 
-# Initialize Jaeger exporter
-jaeger_exporter = JaegerExporter(
-    agent_host_name=JAEGER_HOST,
-    agent_port=JAEGER_PORT,
+# Initialize OTLP gRPC exporter (Jaeger OTLP receiver)
+otlp_exporter = OTLPSpanExporter(
+    endpoint=f"grpc://{JAEGER_OTLP_HOST}:{JAEGER_OTLP_PORT}",
+    insecure=True,
 )
 
 # Create resource
@@ -35,10 +31,10 @@ resource = Resource(attributes={
 
 # Initialize tracer provider
 trace_provider = TracerProvider(resource=resource)
-trace_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
+trace_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
 trace.set_tracer_provider(trace_provider)
 
 # Get global tracer
 tracer = trace.get_tracer(__name__)
 
-logger.info(f"OpenTelemetry initialized - Jaeger at {JAEGER_HOST}:{JAEGER_PORT}")
+logger.info(f"✅ OpenTelemetry initialized - Jaeger OTLP at {JAEGER_OTLP_HOST}:{JAEGER_OTLP_PORT}")
