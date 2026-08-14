@@ -119,6 +119,17 @@ async def health_check():
     )
 
 
+# API health check endpoint (alias for /health)
+@app.get("/api/health", response_model=HealthResponse)
+async def api_health_check():
+    """API health check endpoint (alias)"""
+    return HealthResponse(
+        status="ok",
+        timestamp=datetime.utcnow().isoformat(),
+        version="1.0.0",
+    )
+
+
 # Include OAuth router
 app.include_router(oauth_router, tags=["authentication"])
 
