@@ -127,19 +127,19 @@ services:
       - mcp-network
     restart: unless-stopped
 
-  # Jaeger for distributed tracing
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: mcp-jaeger
-    ports:
-      - "16686:16686"  # Jaeger UI
-      - "4317:4317"    # OTLP receiver
-      - "6831:6831/udp"  # Jaeger agent
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-    networks:
-      - mcp-network
-    restart: unless-stopped
+  # Jaeger for distributed tracing - DISABLED (using Traces tab in dashboard instead)
+  # jaeger:
+  #   image: jaegertracing/all-in-one:latest
+  #   container_name: mcp-jaeger
+  #   ports:
+  #     - "16686:16686"  # Jaeger UI
+  #     - "4317:4317"    # OTLP receiver
+  #     - "6831:6831/udp"  # Jaeger agent
+  #   environment:
+  #     - COLLECTOR_OTLP_ENABLED=true
+  #   networks:
+  #     - mcp-network
+  #   restart: unless-stopped
 
 volumes:
   redis-data:
