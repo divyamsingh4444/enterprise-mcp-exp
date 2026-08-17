@@ -13,16 +13,6 @@ interface TraceEvent {
   error?: string;
 }
 
-interface TracesResponse {
-  traces: TraceEvent[];
-  stats: {
-    total: number;
-    success: number;
-    errors: number;
-    avg_duration_ms: number;
-  };
-}
-
 export const Traces: React.FC = () => {
   const [traces, setTraces] = useState<TraceEvent[]>([]);
   const [stats, setStats] = useState<any>(null);
