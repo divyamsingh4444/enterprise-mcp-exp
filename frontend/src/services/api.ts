@@ -132,6 +132,11 @@ class McpAPI {
     return response.data;
   }
 
+  async getTraces(limit: number = 50): Promise<any> {
+    const response = await this.client.get(`/api/v1/mcp/traces?limit=${limit}`);
+    return response.data;
+  }
+
   isAuthenticated(): boolean {
     return !!this.token;
   }

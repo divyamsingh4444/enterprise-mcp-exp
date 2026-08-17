@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Activity, TrendingUp, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Activity, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 
 interface TraceEvent {
   timestamp: string;
@@ -33,9 +33,9 @@ export const Traces: React.FC = () => {
   const loadTraces = async () => {
     try {
       setLoading(true);
-      const response = await api.client.get<TracesResponse>('/api/v1/mcp/traces?limit=50');
-      setTraces(response.data.traces);
-      setStats(response.data.stats);
+      const response = await api.getTraces(50);
+      setTraces(response.traces);
+      setStats(response.stats);
     } catch (err) {
       console.error('Failed to load traces', err);
     } finally {
