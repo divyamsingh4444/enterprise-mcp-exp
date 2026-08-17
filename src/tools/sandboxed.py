@@ -12,7 +12,9 @@ from src.sandbox.runner import get_sandbox_runner
 from src.auth.auth_context import AuthContext
 from src.auth.middleware import AuditLogger
 from src.observability.otel import tracer
+from src.observability.trace_store import trace_store, TraceEvent
 from opentelemetry import trace
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,15 @@ async def run_command_sandboxed(command: str, timeout_s: float = 20.0, auth: Aut
             span.set_attribute("result.status", "insufficient_scope")
             span.set_attribute("security.scope_required", "tools:shell:execute")
             AuditLogger.log_scope_check(auth.subject, "tools:shell:execute", False, auth.org_id)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="run_command",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="insufficient_scope",
+                duration_ms=0,
+                error="Insufficient permissions"
+            ))
             return {"exit_code": 1, "stdout": "", "stderr": "Insufficient permissions", "duration_ms": 0, "sandboxed": True}
 
         AuditLogger.log_scope_check(auth.subject, "tools:shell:execute", True, auth.org_id)
@@ -46,6 +57,15 @@ async def run_command_sandboxed(command: str, timeout_s: float = 20.0, auth: Aut
             span.set_attribute("result.status", "success")
             span.add_event("command_executed", {"command_length": len(command)})
             AuditLogger.log_tool_execution(auth.subject, "run_command", auth.org_id, result.duration_ms)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="run_command",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="success",
+                duration_ms=result.duration_ms,
+                exit_code=result.exit_code
+            ))
             return {"exit_code": result.exit_code, "stdout": result.stdout, "stderr": result.stderr, "duration_ms": result.duration_ms, "sandboxed": True}
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
@@ -54,6 +74,15 @@ async def run_command_sandboxed(command: str, timeout_s: float = 20.0, auth: Aut
             span.set_attribute("result.duration_ms", duration_ms)
             span.record_exception(e)
             AuditLogger.log_tool_execution(auth.subject, "run_command", auth.org_id, duration_ms)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="run_command",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=duration_ms,
+                error=str(e)
+            ))
             return {"exit_code": 1, "stdout": "", "stderr": str(e), "duration_ms": duration_ms, "sandboxed": True}
 
 async def write_file_sandboxed(path: str, content: str, mode: str = "overwrite", auth: AuthContext = None) -> Dict[str, Any]:

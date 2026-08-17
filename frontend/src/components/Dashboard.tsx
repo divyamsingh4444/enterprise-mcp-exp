@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api, Tool, ToolCallResponse } from '../services/api';
 import { useAuthStore } from '../store/auth';
-import { Play, Loader, AlertCircle, CheckCircle, Code2 } from 'lucide-react';
+import { Play, Loader, AlertCircle, CheckCircle, Code2, Activity } from 'lucide-react';
+import { Traces } from './Traces';
 
 export const Dashboard: React.FC = () => {
   const [tools, setTools] = useState<Tool[]>([]);
@@ -12,6 +13,7 @@ export const Dashboard: React.FC = () => {
   const [result, setResult] = useState<ToolCallResponse | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tools' | 'traces'>('tools');
 
   const { logout, user } = useAuthStore();
 
@@ -76,17 +78,46 @@ export const Dashboard: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-900">{error}</p>
-              <button onClick={loadTools} className="text-xs text-red-600 hover:text-red-700 mt-1 underline">
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-8 border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab('tools')}
+            className={`px-4 py-3 font-medium text-sm transition border-b-2 ${
+              activeTab === 'tools'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Code2 className="w-4 h-4 inline mr-2" />
+            Tools
+          </button>
+          <button
+            onClick={() => setActiveTab('traces')}
+            className={`px-4 py-3 font-medium text-sm transition border-b-2 ${
+              activeTab === 'traces'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Activity className="w-4 h-4 inline mr-2" />
+            Traces
+          </button>
+        </div>
+
+        {/* Tools Tab */}
+        {activeTab === 'tools' && (
+          <>
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-900">{error}</p>
+                  <button onClick={loadTools} className="text-xs text-red-600 hover:text-red-700 mt-1 underline">
+                    Retry
+                  </button>
+                </div>
+              </div>
+            )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Tool Selector */}
@@ -223,6 +254,11 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
         </div>
+          </>
+        )}
+
+        {/* Traces Tab */}
+        {activeTab === 'traces' && <Traces />}
       </main>
     </div>
   );

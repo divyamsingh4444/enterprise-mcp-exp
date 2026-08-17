@@ -29,6 +29,7 @@ from src.tools.sandboxed import (
 )
 from src.observability.metrics import MetricsCollector
 from src.observability.otel import tracer  # Initialize OpenTelemetry
+from src.observability.trace_store import trace_store
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -129,6 +130,16 @@ async def api_health_check():
         timestamp=datetime.utcnow().isoformat(),
         version="1.0.0",
     )
+
+
+# Traces endpoint
+@app.get("/api/v1/mcp/traces")
+async def get_traces(limit: int = 50, auth: AuthContext = Depends(require_authenticated)):
+    """Get recent tool execution traces"""
+    metrics.increment("traces_queried")
+    traces = trace_store.get_recent(limit=limit)
+    stats = trace_store.stats()
+    return {"traces": traces, "stats": stats, "total": len(traces)}
 
 
 # Include OAuth router
