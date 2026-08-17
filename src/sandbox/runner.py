@@ -6,6 +6,7 @@ Provides container-based execution with OS-level isolation.
 import asyncio
 import json
 import logging
+import os
 import re
 import subprocess
 import time
@@ -34,10 +35,11 @@ class SandboxResult:
 
 class SandboxRunner:
     """Manages sandboxed execution using gVisor and Docker."""
-    
+
     def __init__(self):
         """Initialize sandbox runner."""
         self.workspace = "/tmp/mcp-workspace"
+        os.makedirs(self.workspace, exist_ok=True)
         logger.info(f"SandboxRunner initialized (workspace: {self.workspace})")
     
     async def run_command(
