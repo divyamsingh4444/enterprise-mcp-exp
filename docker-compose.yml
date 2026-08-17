@@ -28,7 +28,7 @@ services:
       - PORT=8001
       - WORKERS=1
       - PYTHONUNBUFFERED=1
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=${DATABASE_URL}
       - MCP_SECRET_KEY=${MCP_SECRET_KEY}
       - ENVIRONMENT=${ENVIRONMENT:-development}
@@ -52,7 +52,7 @@ services:
       - PORT=8002
       - WORKERS=1
       - PYTHONUNBUFFERED=1
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=${DATABASE_URL}
       - MCP_SECRET_KEY=${MCP_SECRET_KEY}
       - ENVIRONMENT=${ENVIRONMENT:-development}
@@ -76,7 +76,7 @@ services:
       - PORT=8003
       - WORKERS=1
       - PYTHONUNBUFFERED=1
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=${DATABASE_URL}
       - MCP_SECRET_KEY=${MCP_SECRET_KEY}
       - ENVIRONMENT=${ENVIRONMENT:-development}
@@ -100,7 +100,7 @@ services:
       - PORT=8004
       - WORKERS=1
       - PYTHONUNBUFFERED=1
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=${DATABASE_URL}
       - MCP_SECRET_KEY=${MCP_SECRET_KEY}
       - ENVIRONMENT=${ENVIRONMENT:-development}
