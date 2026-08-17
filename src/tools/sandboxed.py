@@ -107,6 +107,15 @@ async def write_file_sandboxed(path: str, content: str, mode: str = "overwrite",
             span.set_attribute("result.status", "insufficient_scope")
             span.set_attribute("security.scope_required", "tools:filesystem:write")
             AuditLogger.log_scope_check(auth.subject, "tools:filesystem:write", False, auth.org_id)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="write_file",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="insufficient_scope",
+                duration_ms=0,
+                error="Insufficient permissions"
+            ))
             return {"success": False, "path": path, "error": "Insufficient permissions", "sandboxed": True}
 
         AuditLogger.log_scope_check(auth.subject, "tools:filesystem:write", True, auth.org_id)
@@ -116,9 +125,26 @@ async def write_file_sandboxed(path: str, content: str, mode: str = "overwrite",
                 span.set_attribute("result.status", "success")
                 span.set_attribute("result.duration_ms", result.duration_ms)
                 AuditLogger.log_tool_execution(auth.subject, "write_file", auth.org_id, result.duration_ms)
+                trace_store.add_trace(TraceEvent(
+                    timestamp=datetime.utcnow().isoformat(),
+                    tool_name="write_file",
+                    user=auth.subject,
+                    org_id=auth.org_id,
+                    status="success",
+                    duration_ms=result.duration_ms
+                ))
                 return {"success": True, "path": path, "mode": mode, "size_bytes": len(content), "duration_ms": result.duration_ms, "sandboxed": True}
             span.set_attribute("result.status", "failed")
             span.set_attribute("result.error", result.stderr)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="write_file",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=result.duration_ms,
+                error=result.stderr
+            ))
             return {"success": False, "path": path, "error": result.stderr, "duration_ms": result.duration_ms, "sandboxed": True}
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
@@ -126,6 +152,15 @@ async def write_file_sandboxed(path: str, content: str, mode: str = "overwrite",
             span.set_attribute("result.error", str(e))
             span.record_exception(e)
             AuditLogger.log_tool_execution(auth.subject, "write_file", auth.org_id, duration_ms)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="write_file",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=duration_ms,
+                error=str(e)
+            ))
             return {"success": False, "path": path, "error": str(e), "duration_ms": duration_ms, "sandboxed": True}
 
 async def read_file_sandboxed(path: str, auth: AuthContext = None) -> Dict[str, Any]:
@@ -148,6 +183,15 @@ async def read_file_sandboxed(path: str, auth: AuthContext = None) -> Dict[str, 
             span.set_attribute("result.status", "insufficient_scope")
             span.set_attribute("security.scope_required", "tools:filesystem:read")
             AuditLogger.log_scope_check(auth.subject, "tools:filesystem:read", False, auth.org_id)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="read_file",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="insufficient_scope",
+                duration_ms=0,
+                error="Insufficient permissions"
+            ))
             return {"success": False, "path": path, "error": "Insufficient permissions", "sandboxed": True}
 
         AuditLogger.log_scope_check(auth.subject, "tools:filesystem:read", True, auth.org_id)
@@ -158,9 +202,26 @@ async def read_file_sandboxed(path: str, auth: AuthContext = None) -> Dict[str, 
                 span.set_attribute("result.duration_ms", result.duration_ms)
                 span.set_attribute("file.size_bytes", len(result.stdout))
                 AuditLogger.log_tool_execution(auth.subject, "read_file", auth.org_id, result.duration_ms)
+                trace_store.add_trace(TraceEvent(
+                    timestamp=datetime.utcnow().isoformat(),
+                    tool_name="read_file",
+                    user=auth.subject,
+                    org_id=auth.org_id,
+                    status="success",
+                    duration_ms=result.duration_ms
+                ))
                 return {"success": True, "path": path, "content": result.stdout, "size_bytes": len(result.stdout), "duration_ms": result.duration_ms, "sandboxed": True}
             span.set_attribute("result.status", "failed")
             span.set_attribute("result.error", result.stderr)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="read_file",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=result.duration_ms,
+                error=result.stderr
+            ))
             return {"success": False, "path": path, "error": result.stderr, "duration_ms": result.duration_ms, "sandboxed": True}
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
@@ -168,6 +229,15 @@ async def read_file_sandboxed(path: str, auth: AuthContext = None) -> Dict[str, 
             span.set_attribute("result.error", str(e))
             span.record_exception(e)
             AuditLogger.log_tool_execution(auth.subject, "read_file", auth.org_id, duration_ms)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="read_file",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=duration_ms,
+                error=str(e)
+            ))
             return {"success": False, "path": path, "error": str(e), "duration_ms": duration_ms, "sandboxed": True}
 
 async def list_directory_sandboxed(path: str = ".", auth: AuthContext = None) -> Dict[str, Any]:
@@ -190,6 +260,15 @@ async def list_directory_sandboxed(path: str = ".", auth: AuthContext = None) ->
             span.set_attribute("result.status", "insufficient_scope")
             span.set_attribute("security.scope_required", "tools:filesystem:list")
             AuditLogger.log_scope_check(auth.subject, "tools:filesystem:list", False, auth.org_id)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="list_directory",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="insufficient_scope",
+                duration_ms=0,
+                error="Insufficient permissions"
+            ))
             return {"success": False, "path": path, "error": "Insufficient permissions", "sandboxed": True}
 
         AuditLogger.log_scope_check(auth.subject, "tools:filesystem:list", True, auth.org_id)
@@ -201,9 +280,26 @@ async def list_directory_sandboxed(path: str = ".", auth: AuthContext = None) ->
                 span.set_attribute("result.duration_ms", result.duration_ms)
                 span.set_attribute("directory.entry_count", len(entries))
                 AuditLogger.log_tool_execution(auth.subject, "list_directory", auth.org_id, result.duration_ms)
+                trace_store.add_trace(TraceEvent(
+                    timestamp=datetime.utcnow().isoformat(),
+                    tool_name="list_directory",
+                    user=auth.subject,
+                    org_id=auth.org_id,
+                    status="success",
+                    duration_ms=result.duration_ms
+                ))
                 return {"success": True, "path": path, "entries": entries, "count": len(entries), "duration_ms": result.duration_ms, "sandboxed": True}
             span.set_attribute("result.status", "failed")
             span.set_attribute("result.error", result.stderr)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="list_directory",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=result.duration_ms,
+                error=result.stderr
+            ))
             return {"success": False, "path": path, "error": result.stderr, "duration_ms": result.duration_ms, "sandboxed": True}
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
@@ -211,4 +307,13 @@ async def list_directory_sandboxed(path: str = ".", auth: AuthContext = None) ->
             span.set_attribute("result.error", str(e))
             span.record_exception(e)
             AuditLogger.log_tool_execution(auth.subject, "list_directory", auth.org_id, duration_ms)
+            trace_store.add_trace(TraceEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                tool_name="list_directory",
+                user=auth.subject,
+                org_id=auth.org_id,
+                status="error",
+                duration_ms=duration_ms,
+                error=str(e)
+            ))
             return {"success": False, "path": path, "error": str(e), "duration_ms": duration_ms, "sandboxed": True}
