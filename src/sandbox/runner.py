@@ -77,10 +77,13 @@ class SandboxRunner:
                 )
 
         try:
+            working_dir = cwd or self.workspace
+            os.makedirs(working_dir, exist_ok=True)
+
             result = subprocess.run(
                 command,
                 shell=True,
-                cwd=cwd or self.workspace,
+                cwd=working_dir,
                 capture_output=True,
                 text=True,
                 timeout=timeout_s,
