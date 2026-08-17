@@ -1,8 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { api, Tool, ToolCallResponse } from '../services/api';
 import { useAuthStore } from '../store/auth';
-import { Play, Loader, AlertCircle, CheckCircle, Code2, Activity } from 'lucide-react';
+import { Play, Loader, AlertCircle, CheckCircle, Code2, Activity, Zap, FileText } from 'lucide-react';
 import { Traces } from './Traces';
+
+const TOOL_EXAMPLES: Record<string, { description: string; examples: Array<{ label: string; args: Record<string, any> }> }> = {
+  run_command: {
+    description: 'Execute shell commands in a secure sandboxed environment. Perfect for running system diagnostics, file operations, and scripts.',
+    examples: [
+      { label: 'List Directory', args: { command: 'ls -la', timeout_s: 20 } },
+      { label: 'Get Current Date', args: { command: 'date', timeout_s: 20 } },
+      { label: 'Check System Info', args: { command: 'uname -a', timeout_s: 20 } },
+      { label: 'Echo Test', args: { command: 'echo "Hello from MCP Sandbox"', timeout_s: 20 } },
+    ]
+  },
+  read_file: {
+    description: 'Read file contents from the sandbox workspace. Useful for retrieving configuration files, logs, or other text data.',
+    examples: [
+      { label: 'Read Hosts File', args: { path: 'test.txt' } },
+      { label: 'Read Config', args: { path: 'config.txt' } },
+    ]
+  },
+  write_file: {
+    description: 'Write or create files in the sandbox workspace. You can overwrite existing files or append to them.',
+    examples: [
+      { label: 'Create Test File', args: { path: 'test.txt', content: 'Hello World', mode: 'overwrite' } },
+      { label: 'Append to Log', args: { path: 'log.txt', content: 'New log entry\n', mode: 'append' } },
+    ]
+  },
+  list_directory: {
+    description: 'List files and directories in the sandbox workspace. Shows permissions, sizes, and file details.',
+    examples: [
+      { label: 'List Current Directory', args: { path: '.' } },
+      { label: 'List Root', args: { path: '/' } },
+    ]
+  },
+};
 
 export const Dashboard: React.FC = () => {
   const [tools, setTools] = useState<Tool[]>([]);
@@ -12,7 +45,7 @@ export const Dashboard: React.FC = () => {
   const [arguments_, setArguments] = useState<Record<string, any>>({});
   const [result, setResult] = useState<ToolCallResponse | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [showDocs, setShowDocs] = useState(false);
+  const [showDocs, setShowDocs] = useState(true);
   const [activeTab, setActiveTab] = useState<'tools' | 'traces'>('tools');
 
   const { logout, user } = useAuthStore();
@@ -51,6 +84,11 @@ export const Dashboard: React.FC = () => {
     } finally {
       setIsExecuting(false);
     }
+  };
+
+  const loadSampleInput = (args: Record<string, any>) => {
+    setArguments(args);
+    setResult(null);
   };
 
   return (
@@ -172,42 +210,69 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   {showDocs && (
-                    <div className="bg-slate-50 rounded border border-slate-200 p-4 mb-4 text-sm text-slate-700 space-y-2">
+                    <div className="bg-blue-50 rounded border border-blue-200 p-4 mb-6 text-sm space-y-4">
                       <div>
-                        <p className="font-semibold text-slate-900 mb-1">Required Scope</p>
-                        <code className="bg-white px-2 py-1 rounded text-blue-600">{selectedTool.required_scope}</code>
+                        <p className="font-semibold text-slate-900 mb-2">What This Tool Does</p>
+                        <p className="text-slate-700">{TOOL_EXAMPLES[selectedTool.name]?.description || selectedTool.description}</p>
+                      </div>
+
+                      {TOOL_EXAMPLES[selectedTool.name]?.examples && (
+                        <div>
+                          <p className="font-semibold text-slate-900 mb-2">Try These Examples</p>
+                          <div className="space-y-2">
+                            {TOOL_EXAMPLES[selectedTool.name].examples.map((example, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => loadSampleInput(example.args)}
+                                className="w-full text-left px-3 py-2 bg-white border border-blue-300 rounded hover:bg-blue-100 transition text-slate-700 hover:text-slate-900 font-medium text-xs"
+                              >
+                                <Zap className="w-3 h-3 inline mr-2 text-blue-600" />
+                                {example.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="font-semibold text-slate-900 mb-1">Required Permission</p>
+                        <code className="bg-white px-2 py-1 rounded text-blue-600 text-xs">{selectedTool.required_scope}</code>
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900 mb-1">Security</p>
-                        <p>✓ Executes in isolated sandbox container with resource limits</p>
+                        <p className="font-semibold text-slate-900 mb-1">🔒 Security</p>
+                        <p className="text-slate-600">✓ Runs in isolated sandbox with resource limits</p>
                       </div>
                     </div>
                   )}
 
                   {/* Arguments */}
                   <div className="space-y-4 mb-6">
-                    <h3 className="font-semibold text-slate-900 text-sm">Arguments</h3>
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-slate-600" />
+                      <h3 className="font-semibold text-slate-900 text-sm">Arguments</h3>
+                    </div>
                     {Object.keys(selectedTool.input_schema.properties || {}).length === 0 ? (
-                      <p className="text-sm text-slate-600">No arguments required</p>
+                      <p className="text-sm text-slate-600 px-3 py-2 bg-slate-50 rounded">No arguments needed for this tool</p>
                     ) : (
                       Object.keys(selectedTool.input_schema.properties || {}).map((key) => {
                         const prop = selectedTool.input_schema.properties[key];
                         const isRequired = selectedTool.input_schema.required?.includes(key);
                         return (
                           <div key={key}>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                              {key} {isRequired && <span className="text-red-600">*</span>}
+                            <label className="block text-sm font-semibold text-slate-800 mb-2">
+                              {key.charAt(0).toUpperCase() + key.slice(1)}
+                              {isRequired && <span className="text-red-600 ml-1">*required</span>}
                             </label>
+                            <p className="text-xs text-slate-600 mb-2 italic">{prop.description}</p>
                             <input
                               type={prop.type === 'number' ? 'number' : 'text'}
-                              placeholder={prop.description}
+                              placeholder={`Enter ${key}...`}
                               value={arguments_[key] || ''}
                               onChange={(e) =>
                                 setArguments((prev) => ({ ...prev, [key]: e.target.value }))
                               }
-                              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-slate-400"
                             />
-                            <p className="text-xs text-slate-500 mt-1">{prop.description}</p>
                           </div>
                         );
                       })
